@@ -1,3 +1,8 @@
+# Uformer-mod 
+This repository is a work-in-progress modification to U-Former to work in the field of microscopy image denoising.
+
+Below is the original readme for reference:
+
 # Uformer: A General U-Shaped Transformer for Image Restoration 
 <b>Zhendong Wang, <a href='https://vinthony.github.io'>Xiaodong Cun</a>, <a href='https://jianminbao.github.io/'>Jianmin Bao</a> and <a href='http://people.ucas.ac.cn/~jzliu?language=en'>Jianzhuang Liu</a> </b>
 
