@@ -1,40 +1,47 @@
 import os
 import torch
+
+
 class Options():
     """docstring for Options"""
+
     def __init__(self):
         pass
 
-    def init(self, parser):        
+    def init(self, parser):
         # global settings
         parser.add_argument('--batch_size', type=int, default=32, help='batch size')
-        parser.add_argument('--nepoch', type=int, default=250, help='training epochs')
+        parser.add_argument('--nepoch', type=int, default=50, help='training epochs')
         parser.add_argument('--train_workers', type=int, default=16, help='train_dataloader workers')
         parser.add_argument('--eval_workers', type=int, default=8, help='eval_dataloader workers')
-        parser.add_argument('--dataset', type=str, default ='SIDD')
-        parser.add_argument('--pretrain_weights',type=str, default='./log/Uformer32/models/model_best.pth', help='path of pretrained_weights')
-        parser.add_argument('--optimizer', type=str, default ='adamw', help='optimizer for training')
+        parser.add_argument('--dataset', type=str, default='SIDD')
+        parser.add_argument('--token', type=str, default=os.sep, help='token used to check order of clean/blurry')
+        parser.add_argument('--data_multiplier', type=int, default=1, help='amount of times to repeat train dataset')
+        parser.add_argument('--pretrain_weights', type=str, default='./log/Uformer32/models/model_best.pth',
+                            help='path of pretrained_weights')
+        parser.add_argument('--optimizer', type=str, default='adamw', help='optimizer for training')
         parser.add_argument('--lr_initial', type=float, default=0.0002, help='initial learning rate')
         parser.add_argument('--weight_decay', type=float, default=0.02, help='weight decay')
         parser.add_argument('--gpu', type=str, default='0,1', help='GPUs')
-        parser.add_argument('--arch', type=str, default ='Uformer',  help='archtechture')
-        parser.add_argument('--mode', type=str, default ='denoising',  help='image restoration mode')
-        
+        parser.add_argument('--arch', type=str, default='Uformer', help='archtechture')
+        parser.add_argument('--mode', type=str, default='denoising', help='image restoration mode')
+
         # args for saving 
-        parser.add_argument('--save_dir', type=str, default ='/home/ma-user/work/deNoTr/log',  help='save dir')
-        parser.add_argument('--save_images', action='store_true',default=False)
-        parser.add_argument('--env', type=str, default ='_',  help='env')
+        parser.add_argument('--save_dir', type=str, default='/home/ma-user/work/deNoTr/log', help='save dir')
+        parser.add_argument('--save_images', action='store_true', default=False)
+        parser.add_argument('--env', type=str, default='_', help='env')
         parser.add_argument('--checkpoint', type=int, default=50, help='checkpoint')
 
         # args for Uformer
-        parser.add_argument('--norm_layer', type=str, default ='nn.LayerNorm', help='normalize layer in transformer')
+        parser.add_argument('--norm_layer', type=str, default='nn.LayerNorm', help='normalize layer in transformer')
         parser.add_argument('--embed_dim', type=int, default=32, help='dim of emdeding features')
         parser.add_argument('--win_size', type=int, default=8, help='window size of self-attention')
-        parser.add_argument('--token_projection', type=str,default='linear', help='linear/conv token projection')
-        parser.add_argument('--token_mlp', type=str,default='leff', help='ffn/leff token mlp')
+        parser.add_argument('--token_projection', type=str, default='linear', help='linear/conv token projection')
+        parser.add_argument('--token_mlp', type=str, default='leff', help='ffn/leff token mlp')
         parser.add_argument('--att_se', action='store_true', default=False, help='se after sa')
-        
+
         # args for vit
+        parser.add_argument('--in_chans', type=int, default=1, help='vit input channels (1 for grayscale, 3 for RGB)')
         parser.add_argument('--vit_dim', type=int, default=256, help='vit hidden_dim')
         parser.add_argument('--vit_depth', type=int, default=12, help='vit depth')
         parser.add_argument('--vit_nheads', type=int, default=8, help='vit hidden_dim')
@@ -43,14 +50,18 @@ class Options():
         parser.add_argument('--global_skip', action='store_true', default=False, help='global skip connection')
         parser.add_argument('--local_skip', action='store_true', default=False, help='local skip connection')
         parser.add_argument('--vit_share', action='store_true', default=False, help='share vit module')
-        
+        parser.add_argument('--vit_se', action='store_true', default=False, help='SE layer')
+
         # args for training
         parser.add_argument('--train_ps', type=int, default=128, help='patch size of training sample')
-        parser.add_argument('--resume', action='store_true',default=False)
-        parser.add_argument('--train_dir', type=str, default ='../datasets/SIDD/train',  help='dir of train data')
-        parser.add_argument('--val_dir', type=str, default ='../datasets/SIDD/val',  help='dir of train data')
-        parser.add_argument('--warmup', action='store_true', default=False, help='warmup') 
-        parser.add_argument('--warmup_epochs', type=int,default=3, help='epochs for warmup') 
-        
+        parser.add_argument('--resume', action='store_true', default=False)
+        parser.add_argument('--reset_optimizer', action='store_true', default=False,
+                            help='do not use the pretraining values for the optimizer')
+        parser.add_argument('--train_dir', type=str, default='../datasets/SIDD/train', help='dir of train data')
+        parser.add_argument('--val_dir', type=str, default='../datasets/SIDD/val', help='dir of train data')
+        parser.add_argument('--warmup', action='store_true', default=False, help='warmup')
+        parser.add_argument('--warmup_epochs', type=int, default=3, help='epochs for warmup')
+        parser.add_argument('--use_mixup_from_epoch', type=int, default=-1,
+                            help='start using mix-up augmentation from epoch N (if -1, don\'t use)')
 
         return parser

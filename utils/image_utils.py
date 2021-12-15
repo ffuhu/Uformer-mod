@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import pickle
 import cv2
+import tifffile
 
 def is_numpy_file(filename):
     return any(filename.endswith(extension) for extension in [".npy"])
@@ -11,6 +12,9 @@ def is_image_file(filename):
 
 def is_png_file(filename):
     return any(filename.endswith(extension) for extension in [".png"])
+
+def is_tiff_file(filename):
+    return any(filename.endswith(extension) for extension in [".tif", ".TIF"])
 
 def is_pkl_file(filename):
     return any(filename.endswith(extension) for extension in [".pkl"])
@@ -32,6 +36,22 @@ def load_img(filepath):
     img = cv2.cvtColor(cv2.imread(filepath), cv2.COLOR_BGR2RGB)
     img = img.astype(np.float32)
     img = img/255.
+    return img
+
+def load_img_tiff(filepath):
+    img = tifffile.imread(filepath)
+    img = img.astype(np.float32)
+    # img = img/(2**16)
+    img = (img - img.min()) / (img.max() - img.min())
+    # img = np.repeat(img[..., np.newaxis], axis=2, repeats=3)
+    return img
+
+def load_img_png(filepath):
+    img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+    img = img.astype(np.float32)
+    # img = img/(2**16)
+    img = (img - img.min()) / (img.max() - img.min())
+    # img = np.repeat(img[..., np.newaxis], axis=2, repeats=3)
     return img
 
 def save_img(filepath, img):

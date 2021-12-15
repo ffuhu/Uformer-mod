@@ -3,19 +3,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-
-
-def tv_loss(x, beta = 0.5, reg_coeff = 5):
+def tv_loss(x, beta=0.5, reg_coeff=5):
     '''Calculates TV loss for an image `x`.
         
     Args:
         x: image, torch.Variable of torch.Tensor
         beta: See https://arxiv.org/abs/1412.0035 (fig. 2) to see effect of `beta` 
     '''
-    dh = torch.pow(x[:,:,:,1:] - x[:,:,:,:-1], 2)
-    dw = torch.pow(x[:,:,1:,:] - x[:,:,:-1,:], 2)
-    a,b,c,d=x.shape
-    return reg_coeff*(torch.sum(torch.pow(dh[:, :, :-1] + dw[:, :, :, :-1], beta))/(a*b*c*d))
+    dh = torch.pow(x[:, :, :, 1:] - x[:, :, :, :-1], 2)
+    dw = torch.pow(x[:, :, 1:, :] - x[:, :, :-1, :], 2)
+    a, b, c, d = x.shape
+    return reg_coeff * (torch.sum(torch.pow(dh[:, :, :-1] + dw[:, :, :, :-1], beta)) / (a * b * c * d))
+
 
 class TVLoss(nn.Module):
     def __init__(self, tv_loss_weight=1):
@@ -37,7 +36,6 @@ class TVLoss(nn.Module):
         return t.size()[1] * t.size()[2] * t.size()[3]
 
 
-
 class CharbonnierLoss(nn.Module):
     """Charbonnier Loss (L1)"""
 
@@ -48,5 +46,5 @@ class CharbonnierLoss(nn.Module):
     def forward(self, x, y):
         diff = x - y
         # loss = torch.sum(torch.sqrt(diff * diff + self.eps))
-        loss = torch.mean(torch.sqrt((diff * diff) + (self.eps*self.eps)))
+        loss = torch.mean(torch.sqrt((diff * diff) + (self.eps * self.eps)))
         return loss

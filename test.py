@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 import torch.nn.functional as F
 from ptflops import get_model_complexity_info
 
-sys.path.append('/home/wangzd/uformer/')
+# sys.path.append('/home/wangzd/uformer/')
 
 import scipy.io as sio
 from utils.loader import get_validation_data
