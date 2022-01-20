@@ -49,8 +49,8 @@ class DataLoaderTrain(Dataset):
         print('using gt_dir: ', gt_dir)
         print('using input_dir: ', input_dir)
 
-        clean_files = sorted(os.listdir(os.path.join(rgb_dir, gt_dir)))
-        noisy_files = sorted(os.listdir(os.path.join(rgb_dir, input_dir)))
+        clean_files = sorted(os.listdir(gt_dir))
+        noisy_files = sorted(os.listdir(input_dir))
 
         self.clean_filenames = [os.path.join(rgb_dir, gt_dir, x) for x in clean_files if is_tiff_file(x) or is_png_file(x)]
         self.noisy_filenames = [os.path.join(rgb_dir, input_dir, x) for x in noisy_files if is_tiff_file(x) or is_png_file(x)]
@@ -190,11 +190,11 @@ class DataLoaderVal(Dataset):
         print('using gt_dir: ', gt_dir)
         print('using input_dir: ', input_dir)
 
-        clean_files = sorted(os.listdir(os.path.join(rgb_dir, gt_dir)))
-        noisy_files = sorted(os.listdir(os.path.join(rgb_dir, input_dir)))
+        clean_files = sorted(os.listdir(gt_dir))
+        noisy_files = sorted(os.listdir(input_dir))
 
-        self.clean_filenames = [os.path.join(rgb_dir, gt_dir, x) for x in clean_files if is_tiff_file(x) or is_png_file(x)]
-        self.noisy_filenames = [os.path.join(rgb_dir, input_dir, x) for x in noisy_files if is_tiff_file(x) or is_png_file(x)]
+        self.clean_filenames = [os.path.join(gt_dir, x) for x in clean_files if is_tiff_file(x) or is_png_file(x)]
+        self.noisy_filenames = [os.path.join(input_dir, x) for x in noisy_files if is_tiff_file(x) or is_png_file(x)]
 
         self.noisy_filenames = reorder_filenames(self.noisy_filenames, reference=self.clean_filenames,
                                                  token=self.img_options['token'])
