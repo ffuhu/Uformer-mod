@@ -62,32 +62,42 @@ def load_optim(optimizer, weights):
 
 
 def get_arch(opt):
-    from model import UNet, Uformer, Uformer_Cross, Uformer_CatCross
+    from model import UNet, Uformer, Uformer_Cross, Uformer_CatCross, MetaUformer, PoolUformer
     arch = opt.arch
 
     print('You choose ' + arch + '...')
     if arch == 'UNet':
-        model_restoration = UNet(dim=opt.embed_dim)
+        model_restoration = UNet(in_channel=opt.in_channel, out_channel=opt.out_channel, dim=opt.embed_dim)
     elif arch == 'Uformer':
         model_restoration = Uformer(img_size=opt.train_ps, embed_dim=opt.embed_dim, win_size=opt.win_size,
                                     token_projection=opt.token_projection, token_mlp=opt.token_mlp,
-                                    in_chans=opt.in_chans)
+                                    in_channel=opt.in_channel, out_channel=opt.out_channel)
     elif arch == 'Uformer16':
         model_restoration = Uformer(img_size=opt.train_ps, embed_dim=16, win_size=8, token_projection='linear',
-                                    token_mlp='leff',
-                                    in_chans=opt.in_chans)
+                                    token_mlp=opt.token_mlp,
+                                    in_channel=opt.in_channel, out_channel=opt.out_channel)
     elif arch == 'Uformer32':
         model_restoration = Uformer(img_size=opt.train_ps, embed_dim=32, win_size=8, token_projection='linear',
-                                    token_mlp='leff',
-                                    in_chans=opt.in_chans)
+                                    token_mlp=opt.token_mlp,
+                                    in_channel=opt.in_channel, out_channel=opt.out_channel)
     elif arch == 'Uformer_CatCross':
         model_restoration = Uformer_CatCross(img_size=opt.train_ps, embed_dim=opt.embed_dim, win_size=8,
                                              token_projection=opt.token_projection, token_mlp=opt.token_mlp,
-                                             in_chans=opt.in_chans)
+                                             in_channel=opt.in_channel, out_channel=opt.out_channel)
     elif arch == 'Uformer_Cross':
         model_restoration = Uformer_Cross(img_size=opt.train_ps, embed_dim=opt.embed_dim, win_size=opt.win_size,
                                           token_projection=opt.token_projection, token_mlp=opt.token_mlp,
-                                          in_chans=opt.in_chans)
+                                          in_channel=opt.in_channel, out_channel=opt.out_channel)
+    elif arch == 'MetaUformer':
+        model_restoration = MetaUformer(img_size=opt.train_ps, embed_dim=opt.embed_dim, win_size=opt.win_size,
+                                        token_projection=opt.token_projection, token_mlp=opt.token_mlp,
+                                        in_channel=opt.in_channel, out_channel=opt.out_channel,
+                                        token_mixing=opt.token_mixing)
+    elif arch == 'PoolUformer':
+        model_restoration = PoolUformer(img_size=opt.train_ps, embed_dim=opt.embed_dim, win_size=opt.win_size,
+                                        token_projection=opt.token_projection, token_mlp=opt.token_mlp,
+                                        in_channel=opt.in_channel, out_channel=opt.out_channel,
+                                        token_mixing=opt.token_mixing)
     else:
         raise Exception("Arch error!")
 

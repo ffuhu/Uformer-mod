@@ -23,6 +23,17 @@ augment = Augment_RGB_torch()
 transforms_aug = [method for method in dir(augment) if callable(getattr(augment, method)) if not method.startswith('_')]
 
 
+def _sample_random_patch(image_clean, image_blurry, patch_shape):
+    # crop a stack_patch with shape self._patch_shape
+    c, w, h = image_clean.shape
+    cp, wp, hp = patch_shape
+    ci = np.random.randint(0, c - cp)
+    xi = np.random.randint(0, w - wp)
+    yi = np.random.randint(0, h - hp)
+    patch_clean = image_clean[ci:ci + cp, xi:xi + hp, yi:yi + wp]
+    patch_blurry = image_blurry[ci:ci + cp, xi:xi + hp, yi:yi + wp]
+    return patch_clean, patch_blurry
+
 ##################################################################################################
 class DataLoaderTrain(Dataset):
     def __init__(self, rgb_dir, img_options=None, target_transform=None):
@@ -32,16 +43,6 @@ class DataLoaderTrain(Dataset):
         self.root_folder = rgb_dir
         self.img_options = img_options
 
-        # gt_dir = 'groundtruth'
-        # input_dir = 'input'
-        # input_dir = rgb_dir + 'A/train/'
-        # gt_dir = rgb_dir + 'B/train/'
-        # input_dir = rgb_dir + 'B_blurred/train/'
-        # gt_dir = rgb_dir + 'clean_medianfilter2/train/'
-        # input_dir = rgb_dir + 'blur_gblur3/train/'
-        # gt_dir = rgb_dir + 'of_up560gaussfilt2down280/train/'
-        # # input_dir = rgb_dir + 'of_blurred_gausssigma5/train/'
-        # input_dir = rgb_dir + 'oof_up560gaussfilt2down280/train/'
         gt_dir = rgb_dir + 'clean/train/'
         input_dir = rgb_dir + 'blurry/train/'
         print('train dataloader')
@@ -51,34 +52,12 @@ class DataLoaderTrain(Dataset):
         clean_files = sorted(os.listdir(os.path.join(rgb_dir, gt_dir)))
         noisy_files = sorted(os.listdir(os.path.join(rgb_dir, input_dir)))
 
-        # self.clean_filenames = [os.path.join(rgb_dir, gt_dir, x) for x in clean_files if is_png_file(x)]
-        # self.noisy_filenames = [os.path.join(rgb_dir, input_dir, x)       for x in noisy_files if is_png_file(x)]
         self.clean_filenames = [os.path.join(rgb_dir, gt_dir, x) for x in clean_files if is_tiff_file(x) or is_png_file(x)]
         self.noisy_filenames = [os.path.join(rgb_dir, input_dir, x) for x in noisy_files if is_tiff_file(x) or is_png_file(x)]
 
         self.noisy_filenames = reorder_filenames(self.noisy_filenames, reference=self.clean_filenames,
                                                  token=self.img_options['token'])
 
-        # # new test
-        # root_folder = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/'
-        # self.clean_filenames = [
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-14_340_496_158.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-31-18_351_434_138.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-104_0_317_150.tif',
-        #     # root_folder + 'clean/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-28-108_14_282_138.tif',
-        #     # root_folder + 'clean/210831_MultiviewTreeFrog_5_w3soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-30-362_50_137_337.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_5_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-36-93_386_336_121.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_5_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-29-123_23_336_142.tif',
-        # ]
-        # self.noisy_filenames = [
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-14_340_496_158.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-31-18_351_434_138.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-104_0_317_150.tif',
-        #     # root_folder + 'blurry/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-28-108_14_282_138.tif',
-        #     # root_folder + 'blurry/210831_MultiviewTreeFrog_5_w2soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-30-362_50_137_337.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_5_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-36-93_386_336_121.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_5_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-29-123_23_336_142.tif',
-        # ]
         multiplier = self.img_options['data_multiplier']
         print(f'Careful! Multiplying train dataset by x{multiplier}!')
         self.clean_filenames = self.clean_filenames * multiplier
@@ -91,57 +70,42 @@ class DataLoaderTrain(Dataset):
 
     def __getitem__(self, index):
         tar_index = index % self.tar_size
-        # clean = torch.from_numpy(np.float32(load_img(self.clean_filenames[tar_index])))
-        # noisy = torch.from_numpy(np.float32(load_img(self.noisy_filenames[tar_index])))
 
-        # clean = torch.from_numpy(np.float32(load_img_tiff(self.clean_filenames[tar_index])))
-        # noisy = torch.from_numpy(np.float32(load_img_tiff(self.noisy_filenames[tar_index])))
+        clean = np.float32(load_img(self.clean_filenames[tar_index]))
+        noisy = np.float32(load_img(self.noisy_filenames[tar_index]))
 
-        # hack to train always with the same image
+        n_channels = self.img_options['in_channel']
 
-        # img_clean = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/patches_128/5/210831_MultiviewTreeFrog_5_w2soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512_1239_uint8.png'
-        # img_blurred = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/patches_128/5/210831_MultiviewTreeFrog_5_w3soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512_1239_uint8.png'
-        # clean = torch.from_numpy(np.float32(load_img_png(img_clean)))
-        # noisy = torch.from_numpy(np.float32(load_img_png(img_blurred)))
-
-        # img_clean = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-104_0_317_150.tif'
-        # img_blurry = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-104_0_317_150.tif'
-
-        # img_clean = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-14_340_496_158.tif'
-        # img_blurry = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-14_340_496_158.tif'
-        # clean = np.float32(load_img_tiff(img_clean))
-        # noisy = np.float32(load_img_tiff(img_blurry))
-
-        # clean = np.float32(load_img_tiff(self.clean_filenames[tar_index]))
-        # noisy = np.float32(load_img_tiff(self.noisy_filenames[tar_index]))
-
-        clean = np.float32(load_img_png(self.clean_filenames[tar_index]))
-        noisy = np.float32(load_img_png(self.noisy_filenames[tar_index]))
-
-        n_channels = 1
-        clean = np.repeat(clean[..., np.newaxis], axis=2, repeats=n_channels)
-        noisy = np.repeat(noisy[..., np.newaxis], axis=2, repeats=n_channels)
+        suffix = ''
+        if clean.ndim < 3:
+            clean = np.repeat(clean[..., np.newaxis], axis=2, repeats=n_channels)
+            noisy = np.repeat(noisy[..., np.newaxis], axis=2, repeats=n_channels)
+        else:
+            if clean.shape[-1] > n_channels:
+                ini_channel = np.random.randint(0, clean.shape[-1] - n_channels)
+                end_channel = ini_channel + n_channels
+                clean = clean[..., ini_channel:end_channel]
+                noisy = noisy[..., ini_channel:end_channel]
+                suffix = f'_ic_{ini_channel}_ec{end_channel}'
+            else:
+                raise NotImplementedError
 
         clean = torch.from_numpy(clean)
         noisy = torch.from_numpy(noisy)
         clean = clean.permute(2, 0, 1)
         noisy = noisy.permute(2, 0, 1)
 
-        clean_filename = os.path.split(self.clean_filenames[tar_index])[-1]
-        noisy_filename = os.path.split(self.noisy_filenames[tar_index])[-1]
+        fn_ext = os.path.splitext(self.clean_filenames[tar_index])[-1]
+        clean_filename = os.path.split(self.clean_filenames[tar_index])[-1].replace(fn_ext, suffix + fn_ext)
+        noisy_filename = os.path.split(self.noisy_filenames[tar_index])[-1].replace(fn_ext, suffix + fn_ext)
 
         # Crop Input and Target
         ps = self.img_options['patch_size']
         H = clean.shape[1]
         W = clean.shape[2]
-        # r = np.random.randint(0, H - ps) if not H-ps else 0
-        # c = np.random.randint(0, W - ps) if not H-ps else 0
-        if H - ps == 0:
-            r = 0
-            c = 0
-        else:
-            r = np.random.randint(0, H - ps)
-            c = np.random.randint(0, W - ps)
+
+        r = 0 if H - ps == 0 else np.random.randint(0, H - ps)
+        c = 0 if H - ps == 0 else np.random.randint(0, W - ps)
         clean = clean[:, r:r + ps, c:c + ps]
         noisy = noisy[:, r:r + ps, c:c + ps]
 
@@ -220,16 +184,6 @@ class DataLoaderVal(Dataset):
         self.root_folder = rgb_dir
         self.img_options = img_options
 
-        # # gt_dir = 'groundtruth'
-        # # input_dir = 'input'
-        # # # input_dir = rgb_dir + 'A/test/'
-        # # gt_dir = rgb_dir + 'B/test/'
-        # # input_dir = rgb_dir + 'B_blurred/test/'
-        # # gt_dir = rgb_dir + 'clean_medianfilter2/test/'
-        # # input_dir = rgb_dir + 'blur_gblur3/test/'
-        # gt_dir = rgb_dir + 'of_up560gaussfilt2down280/test/'
-        # # input_dir = rgb_dir + 'of_blurred_gausssigma5/test/'
-        # input_dir = rgb_dir + 'oof_up560gaussfilt2down280/test/'
         gt_dir = rgb_dir + 'clean/test/'
         input_dir = rgb_dir + 'blurry/test/'
         print('val dataloader')
@@ -239,34 +193,11 @@ class DataLoaderVal(Dataset):
         clean_files = sorted(os.listdir(os.path.join(rgb_dir, gt_dir)))
         noisy_files = sorted(os.listdir(os.path.join(rgb_dir, input_dir)))
 
-        # self.clean_filenames = [os.path.join(rgb_dir, gt_dir, x) for x in clean_files if is_png_file(x)]
-        # self.noisy_filenames = [os.path.join(rgb_dir, input_dir, x)       for x in noisy_files if is_png_file(x)]
         self.clean_filenames = [os.path.join(rgb_dir, gt_dir, x) for x in clean_files if is_tiff_file(x) or is_png_file(x)]
         self.noisy_filenames = [os.path.join(rgb_dir, input_dir, x) for x in noisy_files if is_tiff_file(x) or is_png_file(x)]
 
         self.noisy_filenames = reorder_filenames(self.noisy_filenames, reference=self.clean_filenames,
                                                  token=self.img_options['token'])
-
-        # # new test
-        # root_folder = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/'
-        # self.clean_filenames = [
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-14_340_496_158.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-31-18_351_434_138.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-104_0_317_150.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-28-108_14_282_138.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_5_w3soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-30-362_50_137_337.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_5_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-36-93_386_336_121.tif',
-        #     root_folder + 'clean/210831_MultiviewTreeFrog_5_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-29-123_23_336_142.tif',
-        # ]
-        # self.noisy_filenames = [
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-14_340_496_158.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-31-18_351_434_138.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-104_0_317_150.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-28-108_14_282_138.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_5_w2soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-30-362_50_137_337.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_5_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-36-93_386_336_121.tif',
-        #     root_folder + 'blurry/210831_MultiviewTreeFrog_5_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-29-123_23_336_142.tif',
-        # ]
 
         self.tar_size = len(self.clean_filenames)
 
@@ -276,54 +207,43 @@ class DataLoaderVal(Dataset):
     def __getitem__(self, index):
         tar_index = index % self.tar_size
 
-        # clean = torch.from_numpy(np.float32(load_img(self.clean_filenames[tar_index])))
-        # noisy = torch.from_numpy(np.float32(load_img(self.noisy_filenames[tar_index])))
-        # clean = torch.from_numpy(np.float32(load_img_png(self.clean_filenames[tar_index])))
-        # noisy = torch.from_numpy(np.float32(load_img_png(self.noisy_filenames[tar_index])))
+        clean = np.float32(load_img(self.clean_filenames[tar_index]))
+        noisy = np.float32(load_img(self.noisy_filenames[tar_index]))
 
-        # hack to train always with the same image
+        n_channels = self.img_options['in_channel']
 
-        # img_clean = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/patches_128/5/210831_MultiviewTreeFrog_5_w2soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512_1239_uint8.png'
-        # img_blurred = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/patches_128/5/210831_MultiviewTreeFrog_5_w3soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512_1239_uint8.png'
-        # clean = torch.from_numpy(np.float32(load_img_png(img_clean)))
-        # noisy = torch.from_numpy(np.float32(load_img_png(img_blurred)))
+        suffix = ''
+        if clean.ndim == 2:
+            clean = np.repeat(clean[..., np.newaxis], axis=2, repeats=n_channels)
+            noisy = np.repeat(noisy[..., np.newaxis], axis=2, repeats=n_channels)
+        else:
+            if clean.shape[-1] > n_channels:
+                ini_channel = np.random.randint(0, clean.shape[-1] - n_channels)
+                end_channel = ini_channel + n_channels
+                clean = clean[..., ini_channel:end_channel]
+                noisy = noisy[..., ini_channel:end_channel]
+                suffix = f'_ic_{ini_channel}_ec{end_channel}'
+            else:
+                raise NotImplementedError
 
-        # img_clean = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-104_0_317_150.tif'
-        # img_blurry = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-104_0_317_150.tif'
-
-        # img_clean = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/210831_MultiviewTreeFrog_2_w5soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-14_340_496_158.tif'
-        # img_blurry = '/home/felix/Scratch/nus/00_data/data_Florian/Dataset_Multiview/denoised/cropped_110_110_1024_1024/denoised_cropped_down_512px/good/manually_selected/210831_MultiviewTreeFrog_2_w4soSPIM-405_cropped_110_110_1024_1024_denoised_N2V_centercropped_down512-21-14_340_496_158.tif'
-        #
-        # clean = np.float32(load_img_tiff(img_clean))
-        # noisy = np.float32(load_img_tiff(img_blurry))
-
-        # clean = np.float32(load_img_tiff(self.clean_filenames[tar_index]))
-        # noisy = np.float32(load_img_tiff(self.noisy_filenames[tar_index]))
-        clean = np.float32(load_img_png(self.clean_filenames[tar_index]))
-        noisy = np.float32(load_img_png(self.noisy_filenames[tar_index]))
-
-        n_channels = 1
-        # clean = np.repeat(clean[..., np.newaxis], axis=2, repeats=n_channels)
-        # noisy = np.repeat(noisy[..., np.newaxis], axis=2, repeats=n_channels)
-        clean_ = np.repeat(clean[..., np.newaxis], axis=2, repeats=n_channels)
-        noisy_ = np.repeat(noisy[..., np.newaxis], axis=2, repeats=n_channels)
-        clean = np.zeros((512, 512, n_channels), dtype=np.float32)
-        noisy = np.zeros((512, 512, n_channels), dtype=np.float32)
-        clean[:clean_.shape[0], :clean_.shape[1]] = clean_
-        noisy[:noisy_.shape[0], :noisy_.shape[1]] = noisy_
+        # h_2pow = np.log2(clean.shape[0])
+        # w_2pow = np.log2(clean.shape[1])
+        # if h_2pow != int(h_2pow) or w_2pow != int(w_2pow):
+        #     new_h = 512  #2 **np.ceil(h_2pow).astype(np.int)
+        #     new_w = 512  #2 ** np.ceil(w_2pow).astype(np.int)
+        #     clean_ = clean.copy()
+        #     noisy_ = noisy.copy()
+        #     clean = np.zeros((new_h, new_w, n_channels), dtype=np.float32)
+        #     noisy = np.zeros((new_h, new_w, n_channels), dtype=np.float32)
+        #     clean[:clean_.shape[0], :clean_.shape[1]] = clean_
+        #     noisy[:noisy_.shape[0], :noisy_.shape[1]] = noisy_
 
         clean = torch.from_numpy(clean)
         noisy = torch.from_numpy(noisy)
 
-        # if 'Mouse_actin' in self.root_folder:
-        #     clean = clean[:512, :512]
-        #     noisy = noisy[:512, :512]
-        # if any(dn in self.root_folder for dn in ['Mouse_skull_nuclei', 'Multiview']):
-        #     clean = clean[:256, :256]
-        #     noisy = noisy[:256, :256]
-
-        clean_filename = os.path.split(self.clean_filenames[tar_index])[-1]
-        noisy_filename = os.path.split(self.noisy_filenames[tar_index])[-1]
+        fn_ext = os.path.splitext(self.clean_filenames[tar_index])[-1]
+        clean_filename = os.path.split(self.clean_filenames[tar_index])[-1].replace(fn_ext, suffix + fn_ext)
+        noisy_filename = os.path.split(self.noisy_filenames[tar_index])[-1].replace(fn_ext, suffix + fn_ext)
 
         clean = clean.permute(2, 0, 1)
         noisy = noisy.permute(2, 0, 1)

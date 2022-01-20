@@ -14,7 +14,7 @@ class Options():
         parser.add_argument('--nepoch', type=int, default=50, help='training epochs')
         parser.add_argument('--train_workers', type=int, default=16, help='train_dataloader workers')
         parser.add_argument('--eval_workers', type=int, default=8, help='eval_dataloader workers')
-        parser.add_argument('--dataset', type=str, default='SIDD')
+        parser.add_argument('--dataset', type=str, default='MVDS')
         parser.add_argument('--token', type=str, default=os.sep, help='token used to check order of clean/blurry')
         parser.add_argument('--data_multiplier', type=int, default=1, help='amount of times to repeat train dataset')
         parser.add_argument('--pretrain_weights', type=str, default='./log/Uformer32/models/model_best.pth',
@@ -30,7 +30,7 @@ class Options():
         parser.add_argument('--save_dir', type=str, default='/home/ma-user/work/deNoTr/log', help='save dir')
         parser.add_argument('--save_images', action='store_true', default=False)
         parser.add_argument('--env', type=str, default='_', help='env')
-        parser.add_argument('--checkpoint', type=int, default=50, help='checkpoint')
+        parser.add_argument('--checkpoint', type=int, default=-1, help='checkpoint every N epochs (-1 for never)')
 
         # args for Uformer
         parser.add_argument('--norm_layer', type=str, default='nn.LayerNorm', help='normalize layer in transformer')
@@ -38,10 +38,12 @@ class Options():
         parser.add_argument('--win_size', type=int, default=8, help='window size of self-attention')
         parser.add_argument('--token_projection', type=str, default='linear', help='linear/conv token projection')
         parser.add_argument('--token_mlp', type=str, default='leff', help='ffn/leff token mlp')
+        parser.add_argument('--token_mixing', type=str, default='wind_attn', help='wind_attn/pool token mixing')
         parser.add_argument('--att_se', action='store_true', default=False, help='se after sa')
 
         # args for vit
-        parser.add_argument('--in_chans', type=int, default=1, help='vit input channels (1 for grayscale, 3 for RGB)')
+        parser.add_argument('--in_channel', type=int, default=1, help='vit input channels (1 for grayscale, 3 for RGB)')
+        parser.add_argument('--out_channel', type=int, default=1, help='vit input channels (1 for grayscale, 3 for RGB)')
         parser.add_argument('--vit_dim', type=int, default=256, help='vit hidden_dim')
         parser.add_argument('--vit_depth', type=int, default=12, help='vit depth')
         parser.add_argument('--vit_nheads', type=int, default=8, help='vit hidden_dim')

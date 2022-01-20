@@ -60,7 +60,7 @@ def expand2square(timg, factor=16.0, n_channels=3):
 
 parser = argparse.ArgumentParser(description='RGB denoising evaluation on the validation set of SIDD')
 parser.add_argument('--input_dir', required=True, type=str, help='Directory of validation images')
-parser.add_argument('--result_dir', required=True, type=str, help='Directory for results')
+# parser.add_argument('--result_dir', required=True, type=str, help='Directory for results')
 parser.add_argument('--weights', required=True, type=str, help='Path to weights')
 parser.add_argument('--ext', default='.tif', type=str, help='file extension to look for')
 parser.add_argument('--gpus', default='0', type=str, help='CUDA_VISIBLE_DEVICES')
@@ -116,7 +116,8 @@ with torch.no_grad():
         psnr_val_rgb = []
         ssim_val_rgb = []
         for stack_idx in tqdm(range(img_stack_blurry.shape[0])):
-            filenames = os.path.basename(stack_path)
+            stack_path_dir = os.path.dirname(stack_path)
+            stack_path_name = os.path.basename(stack_path)
 
             img_blurry = img_stack_blurry[stack_idx].astype(np.float32)
             img_blurry_shape = img_blurry.shape
@@ -149,8 +150,11 @@ with torch.no_grad():
             #     utils.save_img(os.path.join(args.result_dir, filename_noisy), img_as_ubyte(img_blurry))
 
         if args.save_images:
-            stack_restored_path = stack_path.replace(args.ext, f'_restored_UFormer{args.ext}')
-            tifffile.imwrite(stack_restored_path, img_stack_restored)
+            exp_name = args.weights.split(os.sep)[-3]
+            stack_path_dir_to_save = os.path.join(stack_path_dir, 'deblurred_' + exp_name)
+            os.makedirs(stack_path_dir_to_save, exist_ok=True)
+            stack_restored_path = stack_path_name.replace(args.ext, f'_restored_UFormer{args.ext}')
+            tifffile.imwrite(os.path.join(stack_path_dir_to_save, stack_restored_path), img_stack_restored)
 
     psnr_val_rgb = sum(psnr_val_rgb) / img_stack_blurry.shape[0]
     ssim_val_rgb = sum(ssim_val_rgb) / img_stack_blurry.shape[0]

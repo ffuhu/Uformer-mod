@@ -39,11 +39,19 @@ class TVLoss(nn.Module):
 class CharbonnierLoss(nn.Module):
     """Charbonnier Loss (L1)"""
 
-    def __init__(self, eps=1e-3):
+    def __init__(self, in_channel=3, out_channel=3, eps=1e-3):
         super(CharbonnierLoss, self).__init__()
+        self.in_channel = in_channel
+        self.out_channel = out_channel
         self.eps = eps
 
     def forward(self, x, y):
+        if x.shape[1] != y.shape[1]:
+            slices_x_center = self.in_channel // 2
+            slices_x_ini = slices_x_center - self.out_channel // 2
+            slices_x_end = slices_x_center + self.out_channel // 2 + 1
+            y = y[:, slices_x_ini:slices_x_end]
+
         diff = x - y
         # loss = torch.sum(torch.sqrt(diff * diff + self.eps))
         loss = torch.mean(torch.sqrt((diff * diff) + (self.eps * self.eps)))
