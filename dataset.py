@@ -72,7 +72,11 @@ class DataLoaderTrain(Dataset):
         tar_index = index % self.tar_size
 
         clean = np.float32(load_img(self.clean_filenames[tar_index]))
-        noisy = np.float32(load_img(self.noisy_filenames[tar_index]))
+        if np.random.uniform(0, 1) < self.img_options['sharpsharp']:
+            # load a clean image as noisy to train clean->clean
+            noisy = clean.copy()
+        else:
+            noisy = np.float32(load_img(self.noisy_filenames[tar_index]))
 
         n_channels = self.img_options['in_channel']
 
@@ -87,6 +91,8 @@ class DataLoaderTrain(Dataset):
                 clean = clean[..., ini_channel:end_channel]
                 noisy = noisy[..., ini_channel:end_channel]
                 suffix = f'_ic_{ini_channel}_ec{end_channel}'
+            elif clean.shape[-1] == n_channels:
+                suffix = f'_ic_0_ec{clean.shape[-1]}'
             else:
                 raise NotImplementedError
 
@@ -223,6 +229,8 @@ class DataLoaderVal(Dataset):
                 clean = clean[..., ini_channel:end_channel]
                 noisy = noisy[..., ini_channel:end_channel]
                 suffix = f'_ic_{ini_channel}_ec{end_channel}'
+            elif clean.shape[-1] == n_channels:
+                suffix = f'_ic_0_ec{clean.shape[-1]}'
             else:
                 raise NotImplementedError
 

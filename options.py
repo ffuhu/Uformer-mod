@@ -23,10 +23,11 @@ class Options():
         parser.add_argument('--lr_initial', type=float, default=0.0002, help='initial learning rate')
         parser.add_argument('--weight_decay', type=float, default=0.02, help='weight decay')
         parser.add_argument('--gpu', type=str, default='0,1', help='GPUs')
-        parser.add_argument('--arch', type=str, default='Uformer', help='archtechture')
+        parser.add_argument('--arch', type=str, default='Uformer', help='architechture')
         parser.add_argument('--mode', type=str, default='denoising', help='image restoration mode')
+        parser.add_argument('--sharpsharp', type=float, default=0, help='probability of using sharp->sharp images during training')
 
-        # args for saving 
+        # args for saving
         parser.add_argument('--save_dir', type=str, default='/home/ma-user/work/deNoTr/log', help='save dir')
         parser.add_argument('--save_images', action='store_true', default=False)
         parser.add_argument('--env', type=str, default='_', help='env')

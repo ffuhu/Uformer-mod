@@ -127,7 +127,7 @@ criterion = CharbonnierLoss(in_channel=opt.in_channel, out_channel=opt.out_chann
 ######### DataLoader ###########
 print('===> Loading datasets')
 img_options_train = {'patch_size': opt.train_ps, 'token': opt.token, 'data_multiplier': opt.data_multiplier,
-                     'in_channel': opt.in_channel, 'out_channel': opt.out_channel}
+                     'in_channel': opt.in_channel, 'out_channel': opt.out_channel, 'sharpsharp': opt.sharpsharp}
 train_dataset = get_training_data(opt.train_dir, img_options_train)
 train_loader = DataLoader(dataset=train_dataset, batch_size=opt.batch_size, shuffle=True,
                           num_workers=opt.train_workers, pin_memory=True, drop_last=False)

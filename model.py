@@ -293,7 +293,7 @@ class UNet(nn.Module):
 
         self.conv10 = nn.Conv2d(dim, out_channel, kernel_size=3, stride=1, padding=1)
 
-    def forward(self, x):
+    def forward(self, x, mask=None):
         conv1 = self.ConvBlock1(x)
         pool1 = self.pool1(conv1)
 
